@@ -34,9 +34,9 @@ module ram (
     logic [7:0] bytes [MEM_SIZE];
 
     assign r_data_out = {bytes[r_addr + 3], bytes[r_addr + 2], bytes[r_addr + 1], bytes[r_addr]};
-    assign r_error = (r_addr > (MEM_SIZE - 4));
+    assign r_error = (r_addr > (MEM_SIZE - 4)) || (r_addr < 0);
     assign rw_data_out = {bytes[rw_addr + 7], bytes[rw_addr + 6], bytes[rw_addr + 5], bytes[rw_addr + 4], bytes[rw_addr + 3], bytes[rw_addr + 2], bytes[rw_addr + 1], bytes[rw_addr]};
-    assign rw_error = (rw_addr > (MEM_SIZE - 8));
+    assign rw_error = (rw_addr > (MEM_SIZE - 8)) || (rw_addr < 0);
 
     // update the output latches when edge of clock or reset hits
     always @(posedge clk or posedge reset) begin
