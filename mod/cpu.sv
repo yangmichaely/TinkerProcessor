@@ -163,8 +163,14 @@ module cpu (
                                 pc <= pc + 4;
                             end
                             5: begin
-                                ans <= rs_val / rt_val;
-                                pc <= pc + 4;
+                                if(rt_val == 0) begin
+                                    error <= 1;
+                                    halt <= 1;
+                                end
+                                else begin
+                                    ans <= rs_val / rt_val;
+                                    pc <= pc + 4;
+                                end
                             end
                             6: begin
                                 ans <= rs_val & rt_val;
@@ -267,9 +273,15 @@ module cpu (
                                 pc <= pc + 4;
                             end
                             28: begin
-                                float_ans = float_rs / float_rt;
-                                ans <= $realtobits(float_ans);
-                                pc <= pc + 4;
+                                if(float_rt == 0) begin
+                                    error <= 1;
+                                    halt <= 1;
+                                end
+                                else begin
+                                    float_ans = float_rs / float_rt;
+                                    ans <= $realtobits(float_ans);
+                                    pc <= pc + 4;
+                                end
                             end
                             29: begin
                                 //TODO: check in function
