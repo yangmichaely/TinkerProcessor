@@ -119,7 +119,7 @@ module cpu (
                 end
             end
             decode: begin                
-                else if(fetch_ready == 1 && decode_ready == 0) begin
+                if(fetch_ready == 1 && decode_ready == 0) begin
                     fetch_ready <= 0;
                     opcode <= r_data_out[31:27];
                     if(opcode == 5'b11111) begin
@@ -139,179 +139,177 @@ module cpu (
             end
             alu: begin
                 if(read_write_ready == 1 && alu_ready == 0) begin
-                    else begin
-                        read_write_ready = 0;
-                        case(opcode)
-                            0: begin
-                                ans <= rs_val + rt_val;
-                                pc <= pc + 4;
-                            end
-                            1: begin
-                                ans <= rd_val + imm;
-                                pc <= pc + 4;
-                            end
-                            2: begin
-                                ans <= rs_val - rt_val;
-                                pc <= pc + 4;
-                            end
-                            3: begin
-                                ans <= rd_val - imm;
-                                pc <= pc + 4;
-                            end
-                            4: begin
-                                ans <= rs_val * rt_val;
-                                pc <= pc + 4;
-                            end
-                            5: begin
-                                if(rt_val == 0) begin
-                                    error <= 1;
-                                    halt <= 1;
-                                end
-                                else begin
-                                    ans <= rs_val / rt_val;
-                                    pc <= pc + 4;
-                                end
-                            end
-                            6: begin
-                                ans <= rs_val & rt_val;
-                                pc <= pc + 4;
-                            end
-                            7: begin
-                                ans <= rs_val | rt_val;
-                                pc <= pc + 4;
-                            end
-                            8: begin
-                                ans <= rs_val ^ rt_val;
-                                pc <= pc + 4;
-                            end
-                            9: begin
-                                ans <= ~rs_val;
-                                pc <= pc + 4;
-                            end
-                            10: begin
-                                ans <= rs_val >> rt_val;
-                                pc <= pc + 4;
-                            end
-                            11: begin
-                                ans <= rd_val >> imm;
-                                pc <= pc + 4;
-                            end
-                            12: begin
-                                ans <= rs_val << rt_val;
-                                pc <= pc + 4;
-                            end
-                            13: begin
-                                ans <= rs_val << imm;
-                                pc <= pc + 4;
-                            end
-                            14: begin
-                                pc <= rd_val;
-                            end
-                            15: begin
-                                pc <= pc + rd_val;
-                            end
-                            16: begin
-                                pc <= pc + imm;
-                            end
-                            17: begin
-                                if(rs_val == 0) begin
-                                    pc <= pc + 4;
-                                end
-                                else begin
-                                    pc <= rd_val;
-                                end
-                            end
-                            18: begin
-                                rw_addr <= reg_file[31] - 8;
-                                rw_data_in <= pc + 4;
-                                rw_write_en <= 1;
-                                pc <= rd_val;
-                            end
-                            19: begin
-                                rw_addr <= reg_file[31] - 8;
-                                pc = rw_data_out;
-                            end
-                            20: begin
-                                if(rs_val <= rt_val) begin
-                                    pc <= pc + 4;
-                                end
-                                else begin
-                                    pc <= rd_val;
-                                end
-                            end
-                            21: begin
-                                rw_addr <= rs_val + imm;
-                                pc <= pc + 4;
-                            end
-                            22: begin
-                                ans <= rs_val;
-                                pc <= pc + 4;
-                            end
-                            23: begin
-                                ans[11:0] <= imm;
-                                pc <= pc + 4;
-                            end
-                            24: begin
-                                rw_addr <= rd_val + imm;
-                                rw_data_in <= rs_val;
-                                rw_write_en <= 1;
-                                pc <= pc + 4;
-                            end
-                            25: begin
-                                float_ans = float_rs + float_rt;
-                                ans <= $realtobits(float_ans);
-                                pc <= pc + 4;
-                            end
-                            26: begin
-                                float_ans = float_rs - float_rt;
-                                ans <= $realtobits(float_ans);
-                                pc <= pc + 4;
-                            end
-                            27: begin
-                                float_ans = float_rs * float_rt;
-                                ans <= $realtobits(float_ans);
-                                pc <= pc + 4;
-                            end
-                            28: begin
-                                if(float_rt == 0) begin
-                                    error <= 1;
-                                    halt <= 1;
-                                end
-                                else begin
-                                    float_ans = float_rs / float_rt;
-                                    ans <= $realtobits(float_ans);
-                                    pc <= pc + 4;
-                                end
-                            end
-                            29: begin
-                                //TODO: check in function
-                                if(rs_val == 0) begin
-                                    ans <= in_data;
-                                    in_signal <= 1;
-                                end
-                                pc <= pc + 4;
-                            end
-                            30: begin
-                                //TODO: check out function
-                                if(rd_val == 1) begin
-                                    out_data <= reg_file[rs_val];
-                                    out_signal <= 1;
-                                end
-                                pc <= pc + 4;
-                            end
-                            default: begin
+                    read_write_ready = 0;
+                    case(opcode)
+                        0: begin
+                            ans <= rs_val + rt_val;
+                            pc <= pc + 4;
+                        end
+                        1: begin
+                            ans <= rd_val + imm;
+                            pc <= pc + 4;
+                        end
+                        2: begin
+                            ans <= rs_val - rt_val;
+                            pc <= pc + 4;
+                        end
+                        3: begin
+                            ans <= rd_val - imm;
+                            pc <= pc + 4;
+                        end
+                        4: begin
+                            ans <= rs_val * rt_val;
+                            pc <= pc + 4;
+                        end
+                        5: begin
+                            if(rt_val == 0) begin
                                 error <= 1;
                                 halt <= 1;
                             end
-                        endcase
-                        alu_ready <= 1;
-                        read_or_write <= 1;
-                        state <= read_write;
-                    end
+                            else begin
+                                ans <= rs_val / rt_val;
+                                pc <= pc + 4;
+                            end
+                        end
+                        6: begin
+                            ans <= rs_val & rt_val;
+                            pc <= pc + 4;
+                        end
+                        7: begin
+                            ans <= rs_val | rt_val;
+                            pc <= pc + 4;
+                        end
+                        8: begin
+                            ans <= rs_val ^ rt_val;
+                            pc <= pc + 4;
+                        end
+                        9: begin
+                            ans <= ~rs_val;
+                            pc <= pc + 4;
+                        end
+                        10: begin
+                            ans <= rs_val >> rt_val;
+                            pc <= pc + 4;
+                        end
+                        11: begin
+                            ans <= rd_val >> imm;
+                            pc <= pc + 4;
+                        end
+                        12: begin
+                            ans <= rs_val << rt_val;
+                            pc <= pc + 4;
+                        end
+                        13: begin
+                            ans <= rs_val << imm;
+                            pc <= pc + 4;
+                        end
+                        14: begin
+                            pc <= rd_val;
+                        end
+                        15: begin
+                            pc <= pc + rd_val;
+                        end
+                        16: begin
+                            pc <= pc + imm;
+                        end
+                        17: begin
+                            if(rs_val == 0) begin
+                                pc <= pc + 4;
+                            end
+                            else begin
+                                pc <= rd_val;
+                            end
+                        end
+                        18: begin
+                            rw_addr <= reg_file[31] - 8;
+                            rw_data_in <= pc + 4;
+                            rw_write_en <= 1;
+                            pc <= rd_val;
+                        end
+                        19: begin
+                            rw_addr <= reg_file[31] - 8;
+                            pc = rw_data_out;
+                        end
+                        20: begin
+                            if(rs_val <= rt_val) begin
+                                pc <= pc + 4;
+                            end
+                            else begin
+                                pc <= rd_val;
+                            end
+                        end
+                        21: begin
+                            rw_addr <= rs_val + imm;
+                            pc <= pc + 4;
+                        end
+                        22: begin
+                            ans <= rs_val;
+                            pc <= pc + 4;
+                        end
+                        23: begin
+                            ans[11:0] <= imm;
+                            pc <= pc + 4;
+                        end
+                        24: begin
+                            rw_addr <= rd_val + imm;
+                            rw_data_in <= rs_val;
+                            rw_write_en <= 1;
+                            pc <= pc + 4;
+                        end
+                        25: begin
+                            float_ans = float_rs + float_rt;
+                            ans <= $realtobits(float_ans);
+                            pc <= pc + 4;
+                        end
+                        26: begin
+                            float_ans = float_rs - float_rt;
+                            ans <= $realtobits(float_ans);
+                            pc <= pc + 4;
+                        end
+                        27: begin
+                            float_ans = float_rs * float_rt;
+                            ans <= $realtobits(float_ans);
+                            pc <= pc + 4;
+                        end
+                        28: begin
+                            if(float_rt == 0) begin
+                                error <= 1;
+                                halt <= 1;
+                            end
+                            else begin
+                                float_ans = float_rs / float_rt;
+                                ans <= $realtobits(float_ans);
+                                pc <= pc + 4;
+                            end
+                        end
+                        29: begin
+                            //TODO: check in function
+                            if(rs_val == 0) begin
+                                ans <= in_data;
+                                in_signal <= 1;
+                            end
+                            pc <= pc + 4;
+                        end
+                        30: begin
+                            //TODO: check out function
+                            if(rd_val == 1) begin
+                                out_data <= rs_val;
+                                out_signal <= 1;
+                            end
+                            pc <= pc + 4;
+                        end
+                        default: begin
+                            error <= 1;
+                            halt <= 1;
+                        end
+                    endcase
+                    alu_ready <= 1;
+                    read_or_write <= 1;
+                    state <= read_write;
                 end
             end
             read_write: begin
-                else if(read_or_write == 1 && alu_ready == 1 && read_write_ready == 0) begin
+                if(read_or_write == 1 && alu_ready == 1 && read_write_ready == 0) begin
                     if(opcode == 21) begin
                         ans <= rw_data_out;
                     end

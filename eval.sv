@@ -40,6 +40,9 @@ module evaluator();
             $display("Memory[%d]: %d", i, cpu_inst.memory.bytes[i]);
         end
 
+        #400;
+        $display("output %d\n", out_data);
+
         $finish;
     end
 
