@@ -1,0 +1,15 @@
+.code
+	addi r0, 27
+	addi r30, 1
+	ld r1, :N2
+	ld r3, :N1
+	mov (r1)(-8), r0
+	mov r2, (r3)(0)
+	out r30, r2
+	halt
+.data
+:N1
+	32
+:N2
+	3
+	22

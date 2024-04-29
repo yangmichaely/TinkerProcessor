@@ -17,7 +17,7 @@ begin \
     end \
     if (__file_handle) begin \
         __code = $fread(bytes, __file_handle); \
-        $display("Code: %d", __code); \
+        //$display("Code: %d", __code); \
         $fclose(__file_handle); \
     end else begin \
         $display("Error opening file"); \

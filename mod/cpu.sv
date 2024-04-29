@@ -33,7 +33,7 @@ module cpu (
     localparam decode = 3'b010;
     localparam alu = 3'b011;
     localparam read_write = 3'b100;
-    reg [2:0] state = init;
+    reg [2:0] state;
     reg [63:0] pc;
 
     //fetch stuff
@@ -105,7 +105,7 @@ module cpu (
                 read_write_ready <= 1;
                 rw_write_en <= 0;
                 for(int i = 0; i < 31; i = i + 1) begin
-                    reg_file[i] <= 0;
+                    reg_file[i] = 0;
                 end
                 reg_file[31] <= 1024 * 512;
                 state <= fetch;
@@ -122,24 +122,19 @@ module cpu (
                 if(fetch_ready == 1 && decode_ready == 0) begin
                     fetch_ready <= 0;
                     opcode <= r_data_out[31:27];
-                    if(opcode == 5'b11111) begin
-                        error <= 0;
-                        halt <= 1;
-                    end
-                    else begin
-                        rd_num <= r_data_out[26:22];
-                        rs_num <= r_data_out[21:17];
-                        rt_num <= r_data_out[16:12];
-                        imm <= r_data_out[11:0];
-                        decode_ready <= 1;
-                        read_or_write <= 0;
-                        state <= read_write;
-                    end
+                    rd_num <= r_data_out[26:22];
+                    rs_num <= r_data_out[21:17];
+                    rt_num <= r_data_out[16:12];
+                    imm <= r_data_out[11:0];
+                    decode_ready <= 1;
+                    read_or_write <= 0;
+                    state <= read_write;
                 end
             end
             alu: begin
                 if(read_write_ready == 1 && alu_ready == 0) begin
-                    read_write_ready = 0;
+                    read_write_ready <= 0;
+                    $display("opcode: %d", opcode);
                     case(opcode)
                         0: begin
                             ans <= rs_val + rt_val;
@@ -200,7 +195,7 @@ module cpu (
                             pc <= pc + 4;
                         end
                         13: begin
-                            ans <= rs_val << imm;
+                            ans <= rd_val << imm;
                             pc <= pc + 4;
                         end
                         14: begin
@@ -221,14 +216,14 @@ module cpu (
                             end
                         end
                         18: begin
+                            rw_write_en <= 1;
                             rw_addr <= reg_file[31] - 8;
                             rw_data_in <= pc + 4;
-                            rw_write_en <= 1;
                             pc <= rd_val;
                         end
                         19: begin
                             rw_addr <= reg_file[31] - 8;
-                            pc = rw_data_out;
+                            pc <= rw_data_out;
                         end
                         20: begin
                             if(rs_val <= rt_val) begin
@@ -251,24 +246,24 @@ module cpu (
                             pc <= pc + 4;
                         end
                         24: begin
+                            rw_write_en <= 1;
                             rw_addr <= rd_val + imm;
                             rw_data_in <= rs_val;
-                            rw_write_en <= 1;
                             pc <= pc + 4;
                         end
                         25: begin
-                            float_ans = float_rs + float_rt;
-                            ans <= $realtobits(float_ans);
+                            float_ans <= float_rs + float_rt;
+                            ans <= float_ans;
                             pc <= pc + 4;
                         end
                         26: begin
-                            float_ans = float_rs - float_rt;
-                            ans <= $realtobits(float_ans);
+                            float_ans <= float_rs - float_rt;
+                            ans <= float_ans;
                             pc <= pc + 4;
                         end
                         27: begin
-                            float_ans = float_rs * float_rt;
-                            ans <= $realtobits(float_ans);
+                            float_ans <= float_rs * float_rt;
+                            ans <= float_ans;
                             pc <= pc + 4;
                         end
                         28: begin
@@ -277,13 +272,12 @@ module cpu (
                                 halt <= 1;
                             end
                             else begin
-                                float_ans = float_rs / float_rt;
-                                ans <= $realtobits(float_ans);
+                                float_ans <= float_rs / float_rt;
+                                ans <= float_ans;
                                 pc <= pc + 4;
                             end
                         end
                         29: begin
-                            //TODO: check in function
                             if(rs_val == 0) begin
                                 ans <= in_data;
                                 in_signal <= 1;
@@ -291,12 +285,18 @@ module cpu (
                             pc <= pc + 4;
                         end
                         30: begin
-                            //TODO: check out function
                             if(rd_val == 1) begin
                                 out_data <= rs_val;
                                 out_signal <= 1;
+                                for(int i = 0; i < 31; i = i + 1) begin
+                                    $display("reg_file[%d]: %d", i, reg_file[i]);
+                                end
                             end
                             pc <= pc + 4;
+                        end
+                        31: begin
+                            halt <= 1;
+                            error <= 0;
                         end
                         default: begin
                             error <= 1;
@@ -313,6 +313,7 @@ module cpu (
                     if(opcode == 21) begin
                         ans <= rw_data_out;
                     end
+                    $display("ans: %d", ans);
                     rw_write_en <= 0;
                     reg_file[rd_num] <= ans;
                     alu_ready <= 0;
