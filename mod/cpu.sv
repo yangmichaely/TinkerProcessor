@@ -84,10 +84,10 @@ module cpu (
         .rw_error(rw_error)
     );
 
-    initial begin
-        $dumpfile("./vcd/cpu.vcd");
-        $dumpvars(0, cpu);
-    end
+    // initial begin
+    //     $dumpfile("./vcd/cpu.vcd");
+    //     $dumpvars(0, cpu);
+    // end
 
     always @(reset) begin
         if (reset == 1) begin
