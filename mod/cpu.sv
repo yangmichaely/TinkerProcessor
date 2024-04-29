@@ -86,14 +86,14 @@ module cpu (
     );
 
     always @(posedge clk) begin
-        if (reset) begin
-            error <= 0;
-            state <= init;
-        end
         //TODO: double check error checking
         if(r_error != 0 || rw_error != 0) begin
             error <= 1;
             halt <= 1;
+        end
+        if (reset == 1) begin
+            error <= 0;
+            state <= init;
         end
         case(state)
             init: begin
@@ -134,7 +134,7 @@ module cpu (
             alu: begin
                 if(read_write_ready == 1 && alu_ready == 0) begin
                     read_write_ready <= 0;
-                    $display("opcode: %d", opcode);
+                    //$display("opcode: %d", opcode);
                     case(opcode)
                         0: begin
                             ans <= rs_val + rt_val;
@@ -288,9 +288,9 @@ module cpu (
                             if(rd_val == 1) begin
                                 out_data <= rs_val;
                                 out_signal <= 1;
-                                for(int i = 0; i < 31; i = i + 1) begin
-                                    $display("reg_file[%d]: %d", i, reg_file[i]);
-                                end
+                                // for(int i = 0; i < 31; i = i + 1) begin
+                                //     $display("reg_file[%d]: %d", i, reg_file[i]);
+                                // end
                             end
                             pc <= pc + 4;
                         end
@@ -313,7 +313,7 @@ module cpu (
                     if(opcode == 21) begin
                         ans <= rw_data_out;
                     end
-                    $display("ans: %d", ans);
+                    //$display("ans: %d", ans);
                     rw_write_en <= 0;
                     reg_file[rd_num] <= ans;
                     alu_ready <= 0;
