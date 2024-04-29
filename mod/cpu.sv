@@ -46,7 +46,7 @@ module cpu (
     reg [63:0] rd_val;
     reg [63:0] rs_val;
     reg [63:0] rt_val;
-    reg [11:0] imm;
+    reg [63:0] imm;
     reg decode_ready;
     reg read_or_write;
 
@@ -83,11 +83,6 @@ module cpu (
         .rw_data_out(rw_data_out),
         .rw_error(rw_error)
     );
-
-    // initial begin
-    //     $dumpfile("./vcd/cpu.vcd");
-    //     $dumpvars(0, cpu);
-    // end
 
     always @(reset) begin
         if (reset == 1) begin
@@ -133,7 +128,8 @@ module cpu (
                     rd_num <= r_data_out[26:22];
                     rs_num <= r_data_out[21:17];
                     rt_num <= r_data_out[16:12];
-                    imm <= r_data_out[11:0];
+                    imm[11:0] <= r_data_out[11:0];
+                    imm[63:12] <= {52{r_data_out[11]}};
                     decode_ready <= 1;
                     read_or_write <= 0;
                     state <= read_write;
