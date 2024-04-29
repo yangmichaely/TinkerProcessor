@@ -28,12 +28,11 @@ module cpu (
     output logic[63:0] out_data
 );
     //initialize stuff
-    localparam init = 3'b000;
-    localparam fetch = 3'b001;
-    localparam decode = 3'b010;
-    localparam alu = 3'b011;
-    localparam read_write = 3'b100;
-    reg [2:0] state;
+    localparam fetch = 2'b00;
+    localparam decode = 2'b01;
+    localparam alu = 2'b10;
+    localparam read_write = 2'b11;
+    reg [1:0] state;
     reg [63:0] pc;
 
     //fetch stuff
@@ -85,31 +84,40 @@ module cpu (
         .rw_error(rw_error)
     );
 
-    always @(posedge clk) begin
-        //TODO: double check error checking
-        if(r_error != 0 || rw_error != 0) begin
+    initial begin
+        $dumpfile("./vcd/cpu.vcd");
+        $dumpvars(0, cpu);
+    end
+
+    always @(reset) begin
+        if (reset == 1) begin
+            pc <= 0;
+            state <= fetch;
+            fetch_ready <= 0;
+            decode_ready <= 0;
+            alu_ready <= 0;
+            read_write_ready <= 1;
+            rw_write_en <= 0;
+            halt <= 0;
+            in_signal <= 0;
+            out_signal <= 0;
+            error <= 0;
+            for(int i = 0; i < 31; i = i + 1) begin
+                reg_file[i] = 0;
+            end
+            reg_file[31] <= 1024 * 512;
+        end
+    end
+
+    always @(r_error, rw_error) begin
+        if (r_error == 1 || rw_error == 1) begin
             error <= 1;
             halt <= 1;
         end
-        if (reset == 1) begin
-            error <= 0;
-            state <= init;
-        end
+    end
+
+    always @(posedge clk) begin
         case(state)
-            init: begin
-                pc <= 0;
-                state <= fetch;
-                fetch_ready <= 0;
-                decode_ready <= 0;
-                alu_ready <= 0;
-                read_write_ready <= 1;
-                rw_write_en <= 0;
-                for(int i = 0; i < 31; i = i + 1) begin
-                    reg_file[i] = 0;
-                end
-                reg_file[31] <= 1024 * 512;
-                state <= fetch;
-            end
             fetch: begin
                 if(read_write_ready == 1 && fetch_ready == 0) begin
                     read_write_ready <= 0;
@@ -288,15 +296,11 @@ module cpu (
                             if(rd_val == 1) begin
                                 out_data <= rs_val;
                                 out_signal <= 1;
-                                // for(int i = 0; i < 31; i = i + 1) begin
-                                //     $display("reg_file[%d]: %d", i, reg_file[i]);
-                                // end
                             end
                             pc <= pc + 4;
                         end
                         31: begin
                             halt <= 1;
-                            error <= 0;
                         end
                         default: begin
                             error <= 1;
@@ -309,13 +313,14 @@ module cpu (
                 end
             end
             read_write: begin
+                out_signal <= 0;
                 if(read_or_write == 1 && alu_ready == 1 && read_write_ready == 0) begin
                     if(opcode == 21) begin
                         ans <= rw_data_out;
                     end
-                    //$display("ans: %d", ans);
                     rw_write_en <= 0;
                     reg_file[rd_num] <= ans;
+                    in_signal <= 0;
                     alu_ready <= 0;
                     read_write_ready <= 1;
                     state <= fetch;

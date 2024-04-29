@@ -39,11 +39,13 @@ module evaluator();
         // for (int i = 0; i < 40; i++) begin
         //     $display("Memory[%d]: %d", i, cpu_inst.memory.bytes[i]);
         // end
-
-        #1550;
-        $display("output %d\n", out_data);
-
-        $finish;
+        while(halt != 1) begin
+            if(out_signal == 1) begin
+                $display("Output: %d", out_data);
+            end
+            #10;
+        end  
+        $finish;      
     end
 
 endmodule
