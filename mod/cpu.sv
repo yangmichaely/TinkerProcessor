@@ -223,7 +223,6 @@ module cpu (
                         end
                         19: begin
                             rw_addr <= reg_file[31] - 8;
-                            pc <= rw_data_out;
                         end
                         20: begin
                             if(rs_val <= rt_val) begin
@@ -312,6 +311,9 @@ module cpu (
                     end
                     if(opcode == 18) begin
                         pc <= rd_val;
+                    end
+                    if(opcode == 19) begin
+                        pc <= rw_data_out;
                     end
                     rw_write_en <= 0;
                     alu_ready <= 0;
