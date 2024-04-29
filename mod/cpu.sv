@@ -253,17 +253,17 @@ module cpu (
                         end
                         25: begin
                             float_ans <= float_rs + float_rt;
-                            ans <= float_ans;
+                            ans <= $realtobits(float_ans);
                             pc <= pc + 4;
                         end
                         26: begin
                             float_ans <= float_rs - float_rt;
-                            ans <= float_ans;
+                            ans <= $realtobits(float_ans);
                             pc <= pc + 4;
                         end
                         27: begin
                             float_ans <= float_rs * float_rt;
-                            ans <= float_ans;
+                            ans <= $realtobits(float_ans);
                             pc <= pc + 4;
                         end
                         28: begin
@@ -273,7 +273,7 @@ module cpu (
                             end
                             else begin
                                 float_ans <= float_rs / float_rt;
-                                ans <= float_ans;
+                                ans <= $realtobits(float_ans);
                                 pc <= pc + 4;
                             end
                         end
