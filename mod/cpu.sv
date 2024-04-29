@@ -307,10 +307,12 @@ module cpu (
                 in_signal <= 0;
                 if(read_or_write == 1 && alu_ready == 1 && read_write_ready == 0) begin
                     if(opcode == 21) begin
-                        ans <= rw_data_out;
+                        reg_file[rd_num] <= rw_data_out;
+                    end
+                    else begin
+                        reg_file[rd_num] <= ans;
                     end
                     rw_write_en <= 0;
-                    reg_file[rd_num] <= ans;
                     alu_ready <= 0;
                     read_write_ready <= 1;
                     state <= fetch;
