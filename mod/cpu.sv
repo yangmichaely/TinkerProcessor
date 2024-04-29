@@ -136,7 +136,6 @@ module cpu (
                 if(read_write_ready == 1 && alu_ready == 0) begin
                     read_write_ready <= 0;
                     ans <= rd_val;
-                    //$display("opcode: %d", opcode);
                     case(opcode)
                         0: begin
                             ans <= rs_val + rt_val;
@@ -221,7 +220,6 @@ module cpu (
                             rw_write_en <= 1;
                             rw_addr <= reg_file[31] - 8;
                             rw_data_in <= pc + 4;
-                            pc <= rd_val;
                         end
                         19: begin
                             rw_addr <= reg_file[31] - 8;
@@ -311,6 +309,9 @@ module cpu (
                     end
                     else begin
                         reg_file[rd_num] <= ans;
+                    end
+                    if(opcode == 18) begin
+                        pc <= rd_val;
                     end
                     rw_write_en <= 0;
                     alu_ready <= 0;
