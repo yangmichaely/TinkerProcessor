@@ -256,28 +256,24 @@ module cpu (
                             pc <= pc + 4;
                         end
                         25: begin
-                            float_ans <= float_rs + float_rt;
-                            ans <= $realtobits(float_ans);
+                            ans <= $realtobits($bitstoreal(rs_val) + $bitstoreal(rt_val));
                             pc <= pc + 4;
                         end
                         26: begin
-                            float_ans <= float_rs - float_rt;
-                            ans <= $realtobits(float_ans);
+                            ans <= $realtobits($bitstoreal(rs_val) - $bitstoreal(rt_val));
                             pc <= pc + 4;
                         end
                         27: begin
-                            float_ans <= float_rs * float_rt;
-                            ans <= $realtobits(float_ans);
+                            ans <= $realtobits($bitstoreal(rs_val) * $bitstoreal(rt_val));
                             pc <= pc + 4;
                         end
                         28: begin
-                            if(float_rt == 0) begin
+                            if($bitstoreal(rt_val) == 0) begin
                                 error <= 1;
                                 halt <= 1;
                             end
                             else begin
-                                float_ans <= float_rs / float_rt;
-                                ans <= $realtobits(float_ans);
+                                ans <= $realtobits($bitstoreal(rs_val) / $bitstoreal(rt_val));
                                 pc <= pc + 4;
                             end
                         end
