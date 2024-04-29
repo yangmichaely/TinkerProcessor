@@ -57,9 +57,6 @@ module cpu (
     //alu stuff
     reg alu_ready;
     reg [63:0] ans;
-    real float_ans;
-    real float_rs;
-    real float_rt;
 
     // RAM
     logic [63:0] r_addr;
@@ -138,6 +135,7 @@ module cpu (
             alu: begin
                 if(read_write_ready == 1 && alu_ready == 0) begin
                     read_write_ready <= 0;
+                    ans <= rd_val;
                     //$display("opcode: %d", opcode);
                     case(opcode)
                         0: begin
@@ -306,13 +304,13 @@ module cpu (
             end
             read_write: begin
                 out_signal <= 0;
+                in_signal <= 0;
                 if(read_or_write == 1 && alu_ready == 1 && read_write_ready == 0) begin
                     if(opcode == 21) begin
                         ans <= rw_data_out;
                     end
                     rw_write_en <= 0;
                     reg_file[rd_num] <= ans;
-                    in_signal <= 0;
                     alu_ready <= 0;
                     read_write_ready <= 1;
                     state <= fetch;
@@ -321,9 +319,6 @@ module cpu (
                     rd_val <= reg_file[rd_num];
                     rs_val <= reg_file[rs_num];
                     rt_val <= reg_file[rt_num];
-                    ans <= rd_val;
-                    float_rs <= $bitstoreal(rs_val);
-                    float_rt <= $bitstoreal(rt_val);
                     decode_ready <= 0;
                     read_write_ready <= 1;
                     state <= alu;
