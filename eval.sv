@@ -38,7 +38,7 @@ module evaluator();
     initial begin
         // ======================================================
         // reset the processor and load the tko file into the memory
-        `RESET_AND_LOAD_FILE("tko/ed.tko", clk, reset, cpu_inst.memory.bytes);
+        `RESET_AND_LOAD_FILE("test-suite/tko/dividebyzerotest.tko", clk, reset, cpu_inst.memory.bytes);
     
         // display the memory contents
         // for (int i = 0; i < 40; i++) begin

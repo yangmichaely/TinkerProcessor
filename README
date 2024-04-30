@@ -1,1 +1,70 @@
-This is a processor written in SystemVerilog.
+This is a single-cycle processor written in SystemVerilog. My code operates in
+states, of which there are 4: fetch, decode, alu, and register read/write.
+
+I will explain the overall process in this README, and I will label each section
+in the actual code itself.
+
+Since I have 4 states, I declare 4 2-bit localparams, and I also declare a 2-bit
+register to keep track of the current state.
+
+To deal with pc misalignment, I wrote a piece of code inside an always block that
+operates on the switch of the pc variable. If the pc is not divisible by 4, then 
+we have an error, so I set error <= 1 and halt <= 1.
+
+To deal with reset, I wrote a piece of code inside an always block that operates
+on the switch of the reset variable. If the reset is equal to 1, then I
+re-initialize all variables (ready bits, register values, etc.) to initial values.
+
+To deal with errors, I wrote a piece of code inside an always block that operates
+on the switch of r_error or rw_error. If either one of these are equal to 1, then
+I set error equal to 1 and halt equal to 1.
+
+I operate the processor in one always block that operate on the switch of the clock.
+Inside the always block, I have a switch case that switches on the state.
+
+If we are in the fetch state, then we must check if the fetch_ready bit is equal to
+0 and if the read_write_ready bit is equal to 1 (unlike other ready bits, initially
+the read_write_ready bit is set to 1, for reasons that will be explained further on).
+If the conditions are satisfied, then we set the read_write_ready bit to 0 and the
+fetch_ready bit to 1 in order to prepare for the next state (flipping the ready bits).
+Next, we must retrieve the next instruction in memory. To do this, we just set r_addr
+to pc (the pc is initially set to 0 in the reset always block, and is later updated
+in the alu state). The next state is decode, so we set state to decode.
+
+In the decode state, we check if fetch_ready is 1 and if decode_ready is 0. If the
+conditions are satisfied, then we will decode the instruction as necessary, making
+sure to sign extend the immediate value from 12 bits to 64 bits. Then we set the
+state to read_write, and we set the read_or_write flag to 0 for read.
+
+The read_write state manages both the register reads and the register writes. As
+such, I will discuss the second part of this state at a later time. The register
+read state checks if read_or_write equals 1, if decode_ready equals 1, and if
+read_write_read equals 0. If all conditions are satisfied, then we will read the 
+value of rd, rs, and rt to buffer registers, and flip the ready bits. The next
+state is set to alu.
+
+In the alu state, we first check if read_write_ready is equal to 1 and if
+alu_ready is equal to 0. If they are, then we can flip the ready bits and proceed
+to the calculations, which takes place in a switch case on the opcode. It's important
+to note that I use a buffer register called ans to hold the product of my operations.
+The value of this buffer register is written to the register file in the register
+read/write state. As such, ans is initialized to rd_val, since some instructions
+technically don't require modification of the rd_val. In these cases, ans is not modified,
+so the original value in rd is rewritten by the same value contained in ans. Most
+operations are succesfully completed and written to a buffer register (called ans)
+if necesssary. In div and divf, I make sure to check for division by 0 errors and
+halt if any are detected. Beyond this, there are several special cases that I have
+to consider. In the call operation, I set rw_data_in to pc + 4 in order to write to
+memory. However, since I am directly setting pc to rd_val right after this command,
+I have to set pc <= rd_val in the next state (register write). The same logic follows
+for return and mov rd, (rs)(L). After the alu state, I must write to the registers,
+so I set the state to read_write.
+
+In the second part of the read_write state, I write to the registers. Generally, I
+write the buffer register ans to the register array at the index indicated by rd.
+However, in the special case of mov rd, (rs)(L), I directly write rw_data_out 
+(previously given by the alu) to the register array, since this operation is the
+only operation that directly writes to the registers from memory. After this, I set
+read_write_ready to 1 and set the state to fetch to grab the next instruction. because
+I check for this ready bit in the fetch state, I must initially set this bit to 1 in
+order to activate the fetch state.

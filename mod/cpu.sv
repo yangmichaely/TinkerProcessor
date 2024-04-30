@@ -81,7 +81,17 @@ module cpu (
         .rw_error(rw_error)
     );
 
+    always @(pc) begin
+        //error checking for pc misalignment
+        if(pc % 4 != 0) begin
+            $strobe("Simulation error");
+            error <= 1;
+            halt <= 1;
+        end
+    end
+
     always @(reset) begin
+        //initializing necessary variables
         if (reset == 1) begin
             pc <= 0;
             state <= fetch;
@@ -102,20 +112,24 @@ module cpu (
     end
 
     always @(r_error, rw_error) begin
+        //error checking for memory reads
         if (r_error == 1 || rw_error == 1) begin
+            $strobe("Simulation error");
             error <= 1;
             halt <= 1;
         end
     end
 
     always @(posedge clk) begin
+        //main body of the code. 4 states.
         case(state)
             fetch: begin
+                //checking for necessary values of ready bits
                 if(read_write_ready == 1 && fetch_ready == 0) begin
-                    read_write_ready <= 0;
-                    r_addr <= pc;
+                    r_addr <= pc; //grab the address of the next instruction
+                    read_write_ready <= 0; //flip ready bits to prepare for next iteration (applies for all states)
                     fetch_ready <= 1;
-                    state <= decode;
+                    state <= decode; //set next state (applies for all states)
                 end
             end
             decode: begin                
@@ -126,7 +140,7 @@ module cpu (
                     rs_num <= r_data_out[21:17];
                     rt_num <= r_data_out[16:12];
                     imm[11:0] <= r_data_out[11:0];
-                    imm[63:12] <= {52{r_data_out[11]}};
+                    imm[63:12] <= {52{r_data_out[11]}}; //sign extension of immediate value
                     decode_ready <= 1;
                     read_or_write <= 0;
                     state <= read_write;
@@ -135,7 +149,7 @@ module cpu (
             alu: begin
                 if(read_write_ready == 1 && alu_ready == 0) begin
                     read_write_ready <= 0;
-                    ans <= rd_val;
+                    ans <= rd_val; //defualt value of ans is rd_val, in order to handle cases where ans is not written to
                     case(opcode)
                         0: begin
                             ans <= rs_val + rt_val;
@@ -158,7 +172,9 @@ module cpu (
                             pc <= pc + 4;
                         end
                         5: begin
+                            //division by zero error
                             if(rt_val == 0) begin
+                                $strobe("Simulation error");
                                 error <= 1;
                                 halt <= 1;
                             end
@@ -220,9 +236,13 @@ module cpu (
                             rw_write_en <= 1;
                             rw_addr <= reg_file[31] - 8;
                             rw_data_in <= pc + 4;
+                            //pc is not set to rd_val here, since the non-blocking assignment will affect the value of pc in the next cycle.
+                            //we will set the pc to rd_val in the next state
                         end
                         19: begin
                             rw_addr <= reg_file[31] - 8;
+                            //pc is not set to rw_data_out here, since the non-blocking assignment will affect the value of pc in the next cycle.
+                            //we will set the pc to rw_data_out in the next state
                         end
                         20: begin
                             if(rs_val <= rt_val) begin
@@ -235,6 +255,8 @@ module cpu (
                         21: begin
                             rw_addr <= rs_val + imm;
                             pc <= pc + 4;
+                            //ans is not set to rw_data_out here, since the non-blocking assignment will affect the value of ans in the next cycle.
+                            //we will directly write rw_data_out to the register file in the next state
                         end
                         22: begin
                             ans <= rs_val;
@@ -251,6 +273,7 @@ module cpu (
                             pc <= pc + 4;
                         end
                         25: begin
+                            //using realtobits and bitstoreal to convert from and to floating point numbers, respectively
                             ans <= $realtobits($bitstoreal(rs_val) + $bitstoreal(rt_val));
                             pc <= pc + 4;
                         end
@@ -263,7 +286,9 @@ module cpu (
                             pc <= pc + 4;
                         end
                         28: begin
+                            //division by zero error
                             if($bitstoreal(rt_val) == 0) begin
+                                $strobe("Simulation error");
                                 error <= 1;
                                 halt <= 1;
                             end
@@ -300,25 +325,26 @@ module cpu (
                 end
             end
             read_write: begin
+                //reset out and in signal to 0 here to prevent the output/input ports from display output or taking input when they are not supposed to
                 out_signal <= 0;
                 in_signal <= 0;
                 if(read_or_write == 1 && alu_ready == 1 && read_write_ready == 0) begin
                     if(opcode == 21) begin
-                        reg_file[rd_num] <= rw_data_out;
+                        reg_file[rd_num] <= rw_data_out; //special case specified in the alu earlier
                     end
                     else begin
                         reg_file[rd_num] <= ans;
                     end
                     if(opcode == 18) begin
-                        pc <= rd_val;
+                        pc <= rd_val; //special case specified in the alu earlier
                     end
                     if(opcode == 19) begin
-                        pc <= rw_data_out;
+                        pc <= rw_data_out; //special case specified in the alu earlier
                     end
                     rw_write_en <= 0;
                     alu_ready <= 0;
                     read_write_ready <= 1;
-                    state <= fetch;
+                    state <= fetch; //prepare for next instruction
                 end
                 else if(read_or_write == 0 && decode_ready == 1 && read_write_ready == 0) begin
                     rd_val <= reg_file[rd_num];
